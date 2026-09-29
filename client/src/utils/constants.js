@@ -78,9 +78,18 @@ export const SORT_OPTIONS = [
   { value: 'rating', label: 'Highest Rated' },
 ];
 
+// Delivery (must match server/src/controllers/orderController.js)
+export const FREE_DELIVERY_THRESHOLD = 5000;
+export const DELIVERY_FEE = 150;
+
 // Pagination
 export const DEFAULT_PAGE_SIZE = 12;
 
-// Image Placeholder
-export const PLACEHOLDER_IMAGE = 'https://placehold.co/400x400/F8F4EC/8B1E3F?text=No+Image';
-export const AVATAR_PLACEHOLDER = 'https://placehold.co/200x200/F8F4EC/8B1E3F?text=User';
+// Image Placeholders — inline SVGs so they work offline and never 404
+const svgPlaceholder = (label) =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#F3EFE6"/><g fill="none" stroke="#1B4332" stroke-opacity=".35" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M140 170h120l-10 110H150z"/><path d="M175 170v-18a25 25 0 0 1 50 0v18"/></g><text x="200" y="330" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#1B4332" fill-opacity=".5">${label}</text></svg>`
+  )}`;
+
+export const PLACEHOLDER_IMAGE = svgPlaceholder('Handmade');
+export const AVATAR_PLACEHOLDER = svgPlaceholder('User');

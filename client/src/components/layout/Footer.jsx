@@ -29,10 +29,9 @@ const footerColumns = [
     title: 'Company',
     links: [
       { label: 'About Us', to: '/about' },
-      { label: 'Our Artisans', to: '/artisans' },
+      { label: 'Our Artisans', to: '/about#artisans' },
+      { label: 'Sustainability', to: '/about#sustainability' },
       { label: 'Become a Seller', to: '/seller/register' },
-      { label: 'Blog', to: '/blog' },
-      { label: 'Sustainability', to: '/sustainability' },
     ],
   },
 ];

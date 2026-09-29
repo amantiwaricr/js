@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
 import {
   LuArrowRight,
   LuChevronLeft,
   LuChevronRight,
-  LuShoppingCart,
   LuShieldCheck,
   LuTag,
   LuUsers,
@@ -21,11 +19,12 @@ import {
   LuBadgeCheck,
 } from 'react-icons/lu';
 import toast from 'react-hot-toast';
-import { CATEGORIES, PLACEHOLDER_IMAGE } from '../../utils/constants';
-import { formatPrice, calculateDiscount, getStarArray, getInitials, isValidEmail } from '../../utils/helpers';
+import { getInitials, isValidEmail } from '../../utils/helpers';
+import useCategories from '../../hooks/useCategories';
 import { getCategoryStyle } from '../../utils/categoryIcons';
 import productService from '../../services/productService';
-import { useCart } from '../../context/CartContext';
+import ProductCard from '../../components/product/ProductCard';
+import Stars from '../../components/product/Stars';
 
 // ---------------------------------------------------------------------------
 // Static content
@@ -144,20 +143,6 @@ const fadeInUp = {
 // ---------------------------------------------------------------------------
 // Small building blocks
 // ---------------------------------------------------------------------------
-
-const Stars = ({ rating, className = 'w-3 h-3' }) => (
-  <span className="flex items-center gap-0.5 text-star" aria-label={`${rating} out of 5 stars`}>
-    {getStarArray(rating).map((type, i) =>
-      type === 'full' ? (
-        <FaStar key={i} className={className} />
-      ) : type === 'half' ? (
-        <FaStarHalfAlt key={i} className={className} />
-      ) : (
-        <FaRegStar key={i} className={className} />
-      )
-    )}
-  </span>
-);
 
 const ScrollButton = ({ direction, onClick, className = '' }) => {
   const Icon = direction === 'left' ? LuChevronLeft : LuChevronRight;
@@ -316,104 +301,51 @@ const Hero = () => {
   );
 };
 
-const CategoryStrip = () => (
-  <motion.section
-    initial="hidden"
-    whileInView="visible"
-    viewport={{ once: true, margin: '-40px' }}
-    variants={fadeInUp}
-    className="bg-white rounded-2xl border border-border-light shadow-card py-5 px-3 sm:px-5"
-  >
-    <ul className="flex lg:justify-between gap-4 overflow-x-auto no-scrollbar">
-      {CATEGORIES.map((category) => {
-        const style = getCategoryStyle(category.id);
-        return (
-          <li key={category.id} className="shrink-0 w-[84px]">
-            <Link to={`/products?category=${category.id}`} className="group flex flex-col items-center text-center">
-              <span
-                className={`w-16 h-16 lg:w-[68px] lg:h-[68px] rounded-full ${style.bg} ${style.color} flex items-center justify-center ring-4 ring-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] group-hover:-translate-y-1 group-hover:shadow-card-hover transition-all`}
-              >
-                <style.icon className="w-7 h-7" strokeWidth={1.5} />
-              </span>
-              <span className="mt-2.5 text-xs font-medium text-text group-hover:text-primary leading-tight">
-                {category.name}
-              </span>
-            </Link>
-          </li>
-        );
-      })}
-      <li className="shrink-0 w-[84px]">
-        <Link to="/categories" className="group flex flex-col items-center text-center">
-          <span className="w-16 h-16 lg:w-[68px] lg:h-[68px] rounded-full bg-white border border-border text-primary flex items-center justify-center group-hover:-translate-y-1 group-hover:shadow-card-hover transition-all">
-            <LuLayoutGrid className="w-6 h-6" strokeWidth={1.5} />
-          </span>
-          <span className="mt-2.5 text-xs font-medium text-text group-hover:text-primary">View All</span>
-        </Link>
-      </li>
-    </ul>
-  </motion.section>
-);
-
-const ProductCard = ({ product, onAddToCart }) => {
-  const price = Number(product.price);
-  const comparePrice = Number(product.comparePrice);
-  const discount = calculateDiscount(comparePrice, price);
-  const rating = Number(product.avgRating) || 0;
+const CategoryStrip = () => {
+  const categories = useCategories();
 
   return (
-    <article className="group shrink-0 snap-start w-[62%] sm:w-[38%] md:w-[30%] lg:w-[calc((100%-4*16px)/5)] flex flex-col bg-white rounded-xl border border-border-light hover:border-border hover:shadow-card-hover transition-all">
-      <Link
-        to={`/products/${product.slug}`}
-        className="relative block aspect-square m-2 mb-0 rounded-lg bg-surface overflow-hidden"
-      >
-        <img
-          src={product.images?.[0]?.url || PLACEHOLDER_IMAGE}
-          alt={product.name}
-          loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
-        {discount > 0 && (
-          <span className="absolute top-2.5 left-2.5 bg-sale text-white text-[11px] font-bold px-2 py-0.5 rounded-md">
-            -{discount}%
-          </span>
-        )}
-      </Link>
-      <div className="flex flex-col flex-1 p-3.5 pt-3">
-        <Link
-          to={`/products/${product.slug}`}
-          className="text-[13px] font-semibold text-text leading-snug line-clamp-2 min-h-[2.5em] hover:text-primary"
-        >
-          {product.name}
-        </Link>
-        <div className="flex items-center gap-1.5 mt-2">
-          <Stars rating={rating} />
-          <span className="text-[11px] text-text-muted">({(product.totalReviews || 0).toLocaleString()})</span>
-        </div>
-        <div className="flex items-end justify-between gap-2 mt-auto pt-3">
-          <div className="leading-tight">
-            <p className="text-[15px] font-bold text-price">{formatPrice(price)}</p>
-            {discount > 0 && (
-              <p className="text-[11px] text-text-muted line-through">{formatPrice(comparePrice)}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => onAddToCart(product.id)}
-            className="w-9 h-9 shrink-0 rounded-lg bg-primary hover:bg-primary-light text-white flex items-center justify-center transition-colors"
-            aria-label={`Add ${product.name} to cart`}
-          >
-            <LuShoppingCart className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </article>
+    <motion.section
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '-40px' }}
+      variants={fadeInUp}
+      className="bg-white rounded-2xl border border-border-light shadow-card py-5 px-3 sm:px-5"
+    >
+      <ul className="flex lg:justify-between gap-4 overflow-x-auto no-scrollbar">
+        {categories.map((category) => {
+          const style = getCategoryStyle(category.slug);
+          return (
+            <li key={category.id} className="shrink-0 w-[84px]">
+              <Link to={`/products?category=${category.id}`} className="group flex flex-col items-center text-center">
+                <span
+                  className={`w-16 h-16 lg:w-[68px] lg:h-[68px] rounded-full ${style.bg} ${style.color} flex items-center justify-center ring-4 ring-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] group-hover:-translate-y-1 group-hover:shadow-card-hover transition-all`}
+                >
+                  <style.icon className="w-7 h-7" strokeWidth={1.5} />
+                </span>
+                <span className="mt-2.5 text-xs font-medium text-text group-hover:text-primary leading-tight">
+                  {category.name}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+        <li className="shrink-0 w-[84px]">
+          <Link to="/categories" className="group flex flex-col items-center text-center">
+            <span className="w-16 h-16 lg:w-[68px] lg:h-[68px] rounded-full bg-white border border-border text-primary flex items-center justify-center group-hover:-translate-y-1 group-hover:shadow-card-hover transition-all">
+              <LuLayoutGrid className="w-6 h-6" strokeWidth={1.5} />
+            </span>
+            <span className="mt-2.5 text-xs font-medium text-text group-hover:text-primary">View All</span>
+          </Link>
+        </li>
+      </ul>
+    </motion.section>
   );
 };
 
 const TopPicks = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { addToCart } = useCart();
   const [trackRef, scroll] = useScroller();
 
   useEffect(() => {
@@ -451,7 +383,11 @@ const TopPicks = () => {
             ))}
           {!loading &&
             products.map((product) => (
-              <ProductCard key={product.id} product={product} onAddToCart={(id) => addToCart(id, 1)} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                className="shrink-0 snap-start w-[62%] sm:w-[38%] md:w-[30%] lg:w-[calc((100%-4*16px)/5)]"
+              />
             ))}
           {!loading && products.length === 0 && (
             <div className="w-full py-12 text-center text-sm text-text-light">

@@ -20,8 +20,8 @@ import {
 } from 'react-icons/lu';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { wishlistService } from '../../services/dataService';
-import { CATEGORIES } from '../../utils/constants';
+import { useWishlist } from '../../context/WishlistContext';
+import useCategories from '../../hooks/useCategories';
 import { getCategoryStyle } from '../../utils/categoryIcons';
 import Logo from '../common/Logo';
 
@@ -51,6 +51,8 @@ const Badge = ({ count }) =>
 const Navbar = () => {
   const { user, isAuthenticated, isSeller, isAdmin, logout } = useAuth();
   const { itemCount } = useCart();
+  const { count: wishlistCount } = useWishlist();
+  const categories = useCategories();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -58,7 +60,6 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
-  const [wishlistCount, setWishlistCount] = useState(0);
   const userMenuRef = useRef(null);
   const categoryMenuRef = useRef(null);
 
@@ -84,24 +85,6 @@ const Navbar = () => {
     setIsCategoryMenuOpen(false);
     setIsUserMenuOpen(false);
   }, [location.pathname, location.search]);
-
-  // Wishlist badge (refreshed on navigation so it stays in sync after add/remove)
-  useEffect(() => {
-    if (!isAuthenticated || isAdmin) {
-      setWishlistCount(0);
-      return;
-    }
-    let cancelled = false;
-    wishlistService
-      .getWishlist()
-      .then((res) => {
-        if (!cancelled) setWishlistCount(res.data.data?.items?.length || 0);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [isAuthenticated, isAdmin, location.pathname]);
 
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
@@ -371,7 +354,7 @@ const Navbar = () => {
                     className="absolute left-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-dropdown border border-border-light p-2 z-50"
                     role="menu"
                   >
-                    {CATEGORIES.map((category) => {
+                    {categories.map((category) => {
                       const style = getCategoryStyle(category.id);
                       return (
                         <Link
@@ -478,7 +461,7 @@ const Navbar = () => {
                 Categories
               </div>
               <ul className="p-2 pt-0">
-                {CATEGORIES.map((category) => {
+                {categories.map((category) => {
                   const style = getCategoryStyle(category.id);
                   return (
                     <li key={category.id}>
