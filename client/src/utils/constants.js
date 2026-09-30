@@ -1,7 +1,25 @@
 // API & App Constants
 
 // API Base URL
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+// Defaults to the same origin ("/api", proxied to the backend by Vite in development), so it
+// always uses the page's protocol. Set VITE_API_URL=https://api.example.com/api when the API
+// lives on another domain.
+const resolveApiUrl = () => {
+  const url = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+  // An https page cannot call a plain-http API on another host (mixed content), so upgrade it.
+  // http://localhost is still allowed by browsers, which keeps local development working.
+  if (
+    typeof window !== 'undefined' &&
+    window.location.protocol === 'https:' &&
+    /^http:\/\//.test(url) &&
+    !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(url)
+  ) {
+    return url.replace(/^http:/, 'https:');
+  }
+  return url;
+};
+
+export const API_URL = resolveApiUrl();
 
 // App Info
 export const APP_NAME = 'HAMROLOK BAZAR';
